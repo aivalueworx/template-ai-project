@@ -1,0 +1,287 @@
+openapi: 3.1.0
+info:
+  title: "OrderFlow API"
+  description: "Order lifecycle management API for the Acme Corp e-commerce platform. Handles checkout, payment, fulfilment, and refunds."
+  version: "1.0.0"
+  contact:
+    name: "Backend Engineering"
+    email: "eng-backend@acme-corp.com"
+  license:
+    name: MIT
+
+servers:
+  - url: https://api.acme-corp.com/v1
+    description: Production
+  - url: https://staging-api.acme-corp.com/v1
+    description: Staging
+  - url: http://localhost:3000/v1
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          example: "Invalid request body"
+
+    Order:
+      type: object
+      required: [id, status, totalPaidCents, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [PENDING, PROCESSING, SHIPPED, DELIVERED, COMPLETED, CANCELLED]
+        totalPaidCents:
+          type: integer
+          description: Total amount paid in cents (e.g. 4999 = $49.99)
+          example: 4999
+        lineItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/LineItem"
+        createdAt:
+          type: string
+          format: date-time
+        deliveredAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    LineItem:
+      type: object
+      required: [productId, quantity, unitPriceCents]
+      properties:
+        productId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        unitPriceCents:
+          type: integer
+
+    Refund:
+      type: object
+      required: [id, orderId, status, amountCents, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [PENDING, SUCCEEDED, FAILED, CANCELLED]
+        amountCents:
+          type: integer
+        estimatedSettlementDays:
+          type: integer
+          example: 5
+          description: Estimated business days until funds appear in customer account
+        createdAt:
+          type: string
+          format: date-time
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  version:
+                    type: string
+                    example: "1.0.0"
+
+  /orders:
+    get:
+      summary: List orders for the authenticated user
+      operationId: listOrders
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, PROCESSING, SHIPPED, DELIVERED, COMPLETED, CANCELLED]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: cursor
+          in: query
+          schema:
+            type: string
+          description: Pagination cursor from previous response
+      responses:
+        '200':
+          description: Paginated list of orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Order"
+                  nextCursor:
+                    type: string
+                    nullable: true
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                code: "UNAUTHENTICATED"
+                message: "Valid Bearer token required"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /orders/{orderId}/refund:
+    post:
+      summary: Initiate a full refund for an order
+      operationId: initiateRefund
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '202':
+          description: Refund accepted and being processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Refund"
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                code: "VALIDATION_ERROR"
+                message: "orderId must be a valid UUID"
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                code: "ORDER_NOT_FOUND"
+                message: "No order found with the provided ID"
+        '409':
+          description: Order is not in a refundable state or refund already in progress
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                not_refundable:
+                  value:
+                    code: "ORDER_NOT_REFUNDABLE"
+                    message: "Order must be in DELIVERED or COMPLETED status to be refunded"
+                already_exists:
+                  value:
+                    code: "REFUND_ALREADY_EXISTS"
+                    message: "A refund is already in progress for this order"
+        '422':
+          description: Refund window expired
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                code: "REFUND_WINDOW_EXPIRED"
+                message: "Refunds can only be requested within 30 days of delivery"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    get:
+      summary: Get refund status for an order
+      operationId: getRefundStatus
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Current refund status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Refund"
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        '404':
+          description: No refund found for this order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                code: "REFUND_NOT_FOUND"
+                message: "No refund has been initiated for this order"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
