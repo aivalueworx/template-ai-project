@@ -1,0 +1,52 @@
+---
+description: "@committer — run conventional commit + push workflow"
+globs: []
+alwaysApply: false
+---
+
+# @committer Rule
+
+**Trigger:** type `@committer` in Cursor chat to invoke this workflow.
+
+## What This Does
+
+Runs the full pre-commit quality gate and creates a conventional commit.
+
+## Steps
+
+### 1 — Pre-commit challenge (Stage 3A, CHALLENGE_PROMPTS.md)
+Answer before staging:
+- Any `console.log`, debug statements, or `TODO` in production paths?
+- Any dead code — unreachable paths, unused imports, commented-out blocks?
+- Does the commit message accurately describe what changed?
+- Any config file changes that affect other developers' local setup?
+
+If any answer is "yes" → STOP and fix first.
+
+### 2 — Stage changes
+```bash
+git add -A
+git diff --cached --stat
+```
+Review what's being staged. Confirm nothing unexpected.
+
+### 3 — Write commit message
+Format: `type(scope): description`
+- Present tense, imperative mood: "add", "fix", "update" — not "added", "fixes"
+- Under 72 characters
+- If breaking change: add `BREAKING CHANGE: description` in footer
+
+### 4 — Commit
+```bash
+git commit -m "type(scope): description"
+```
+
+### 5 — Push
+```bash
+git push origin HEAD
+```
+
+### Rules
+- Never `--force` push to `main` or `master`
+- Never commit `.env` or secrets
+- If push fails due to remote changes: `git pull --rebase` then retry

@@ -1,0 +1,20 @@
+# CODEOWNERS — Human-protected files require human review on every PR.
+# AI agents must never directly push changes to these paths.
+# Format: pattern  @owner-team-or-user
+
+# Architecture Decision Records — immutable once Accepted
+docs/adr/                    @[org]/engineering
+
+# Postmortems — human-authored only, no AI edits
+docs/postmortems/            @[org]/engineering
+
+# Agent governance contracts — defines agent permissions and budgets
+docs/agent-governance/       @[org]/engineering
+
+# Core AI context files — require human sign-off on changes
+AGENTS.md                    @[org]/engineering
+CONVENTIONS.md               @[org]/engineering
+
+# GitHub Actions workflows — security-sensitive
+.github/workflows/           @[org]/engineering
+.github/CODEOWNERS           @[org]/engineering

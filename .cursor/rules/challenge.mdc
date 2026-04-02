@@ -1,0 +1,53 @@
+---
+description: "@challenge — run adversarial review at the current development stage"
+globs: []
+alwaysApply: false
+---
+
+# @challenge Rule
+
+**Trigger:** type `@challenge` in Cursor chat to invoke adversarial review.
+
+## What This Does
+
+Forces a mode switch from "builder" to "adversarial critic" using the appropriate
+stage from `CHALLENGE_PROMPTS.md`. Surfaces bad architecture, hidden assumptions,
+security issues, and over-engineering BEFORE they reach production.
+
+## Selecting the Right Stage
+
+Tell Cursor what stage you're at, or it will infer from context:
+
+| Stage | Trigger phrase |
+|---|---|
+| Planning a feature | `@challenge plan` |
+| Mid-implementation | `@challenge mid` |
+| Before committing | `@challenge commit` |
+| Before opening PR | `@challenge pr` |
+| API/schema changes | `@challenge api` |
+| Post-sprint audit | `@challenge audit` |
+
+## Rules for This Mode
+
+1. Switch into adversarial mode — find failure modes, not solutions.
+2. Do NOT validate. Do NOT soften findings.
+3. Rate every finding: FATAL (block progress) / WARN (fix before PR) / INFO (document).
+4. FATAL findings must be resolved before continuing work.
+5. Reference specific files and line numbers where possible.
+6. For cross-model review (Stage 6): instruct the human to run the prompt with a different model.
+
+## Output Format
+
+```
+## 🚨 FATAL (block progress)
+- [finding] — [file:line] — [why it's fatal]
+
+## ⚠️ WARN (fix before PR)
+- [finding] — [suggested fix]
+
+## ℹ️ INFO (document in DECISIONS.md or HANDOFF.md)
+- [observation]
+
+## Verdict
+PROCEED / PAUSE / REDESIGN
+```

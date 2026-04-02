@@ -1,0 +1,65 @@
+---
+description: Create ADR stubs when significant architectural decisions are made
+globs: ["src/**", "package.json", "*.config.*", "docs/adr/**"]
+alwaysApply: false
+---
+
+# ADR (Architecture Decision Record) Rule
+
+## When to Create an ADR Stub
+
+Create a stub in `docs/adr/` when:
+- Adding a new npm/pip package that will be a core dependency
+- Choosing between two viable architectural approaches
+- Introducing a new pattern that ALL future code should follow
+- Making a breaking schema or API change
+- Choosing a new service, provider, or infrastructure component
+
+## How to Create a Stub (AI Task)
+
+1. Find the next ADR number: `ls docs/adr/ | sort | tail -1`
+2. Create `docs/adr/ADR-{NNN}-{kebab-case-title}.md`
+3. Fill in **Context** and **Options Considered** only — AI is permitted to write these.
+4. Leave **Decision**, **Rationale**, and **Consequences** as `<!-- HUMAN-AUTHORED -->` blocks.
+5. Set Status to `Proposed`.
+
+## What AI Must NEVER Do
+
+- Never fill in `## Decision`, `## Rationale`, or `## Consequences` sections.
+- Never set Status to `Accepted` — only humans do that.
+- Never modify an ADR that already has Status `Accepted` — these are immutable.
+
+## After Creating a Stub
+
+- Add an entry to `DECISIONS.md` referencing the ADR file.
+- Notify the human: "ADR stub created — please fill in the Decision section before merging."
+
+## ADR Stub Template
+
+```markdown
+---
+Status: Proposed
+Date: YYYY-MM-DD
+---
+
+# ADR-{NNN}: {Title}
+
+## Status
+Proposed
+
+## Context
+[AI writes: why this decision is needed, what forces are in play]
+
+## Options Considered
+| Option | Pros | Cons |
+|--------|------|------|
+
+## Decision
+<!-- HUMAN-AUTHORED -->
+
+## Rationale
+<!-- HUMAN-AUTHORED -->
+
+## Consequences
+<!-- HUMAN-AUTHORED -->
+```

@@ -1,0 +1,67 @@
+name: API Docs — Validate & Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/templates/openapi.yaml"
+      - "openapi.yaml"
+  pull_request:
+    paths:
+      - "docs/templates/openapi.yaml"
+      - "openapi.yaml"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  validate:
+    name: Validate OpenAPI spec
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Redocly CLI
+        run: npm install -g @redocly/cli@latest
+
+      - name: Lint OpenAPI spec
+        run: |
+          if [ -f openapi.yaml ]; then
+            redocly lint openapi.yaml
+          elif [ -f docs/templates/openapi.yaml ]; then
+            redocly lint docs/templates/openapi.yaml
+          else
+            echo "No openapi.yaml found — skipping lint"
+          fi
+
+  deploy-pages:
+    name: Deploy API docs to GitHub Pages
+    needs: validate
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Redocly CLI
+        run: npm install -g @redocly/cli@latest
+
+      - name: Build HTML docs
+        run: |
+          SPEC="openapi.yaml"
+          [ -f docs/templates/openapi.yaml ] && SPEC="docs/templates/openapi.yaml"
+          mkdir -p dist
+          redocly build-docs "$SPEC" --output dist/index.html || echo "Build skipped — no valid spec"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,30 @@
+name: Sync from template
+
+# Included in the template so every repo bootstrapped from it
+# can receive upstream template updates as a PR (not a forced push).
+#
+# Required secret: REPO_SYNC_PAT — a PAT with repo scope.
+# Set this in the repo (or org) Settings → Secrets → Actions.
+
+on:
+  schedule:
+    - cron: "0 5 * * MON" # Weekly Monday check
+  workflow_dispatch:
+
+jobs:
+  sync:
+    name: Check for template updates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.REPO_SYNC_PAT }}
+
+      - name: Sync from upstream template
+        uses: AndreasAugustin/actions-template-sync@v2
+        with:
+          github_token: ${{ secrets.REPO_SYNC_PAT }}
+          source_repo_path: aivalueworx/template-ai-project
+          upstream_branch: main
+          pr_title: "[template-sync] Upstream template update"
+          pr_labels: "template-sync,chore"

@@ -1,0 +1,56 @@
+---
+description: Enforce TSDoc on every exported function, class, and type
+globs: ["src/**/*.ts", "src/**/*.tsx"]
+alwaysApply: false
+---
+
+# Docstring Enforcement Rule
+
+Every **exported** function, class, method, and type alias MUST have a TSDoc block.
+
+## Required TSDoc Tags
+
+```typescript
+/**
+ * [One-sentence description of what this does — imperative mood]
+ *
+ * @param paramName - [What this parameter is and valid values/constraints]
+ * @returns [What is returned and in what shape]
+ * @throws {ErrorClassName} [When this error is thrown]
+ * @example
+ * ```typescript
+ * const result = myFunction("input");
+ * // result === "output"
+ * ```
+ */
+export function myFunction(paramName: string): string { ... }
+```
+
+## Rules
+
+- `@param` required for every parameter (including optional ones with `?`)
+- `@returns` required unless the function returns `void` or `Promise<void>`
+- `@throws` required if the function can throw (document the error class and condition)
+- `@example` required for public utilities and hooks — optional for private helpers
+- Do NOT write docstrings that just restate the function name: `// Gets the user` on `getUser()` adds no value.
+
+## Anti-Pattern
+
+```typescript
+/** Gets the user */ // ← useless — says nothing the name doesn't
+export async function getUser(id: string): Promise<User> { ... }
+```
+
+## Good Pattern
+
+```typescript
+/**
+ * Fetches a user by ID from the database.
+ * Returns null if the user does not exist (does not throw).
+ *
+ * @param id - UUID of the user to fetch
+ * @returns The User object, or null if not found
+ * @throws {DatabaseError} If the database connection fails
+ */
+export async function getUser(id: string): Promise<User | null> { ... }
+```

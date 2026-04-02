@@ -1,0 +1,37 @@
+---
+description: Keep openapi.yaml in sync when route handlers are added or modified
+globs: ["src/routes/**", "src/controllers/**", "src/api/**"]
+alwaysApply: false
+---
+
+# OpenAPI Sync Rule
+
+When you add, modify, or delete a route handler, you MUST update `docs/templates/openapi.yaml`
+(or the project's live `openapi.yaml`) to match.
+
+## Before Writing Handler Code
+
+1. Write the OpenAPI path entry FIRST — it acts as the contract the handler implements.
+2. The path entry must include: `operationId`, `summary`, all `parameters`, `requestBody` (if applicable), and all `responses` (including error responses).
+
+## Required Response Codes to Document
+
+| Situation | Required status codes |
+|---|---|
+| All endpoints | `200` (or `201` for POST), `401`, `500` |
+| Endpoints with path params | + `404` |
+| Endpoints with request body | + `400` (validation error) |
+| Endpoints with auth | + `403` |
+
+## Never Do This
+
+- Never remove an existing `responses` entry — only add new ones.
+- Never change an existing `operationId` — this breaks client code generation.
+- Never change a required request field to optional without a migration strategy.
+
+## When Finished
+
+Run Stage 4D (API Contract Check) from `CHALLENGE_PROMPTS.md`:
+- Backward compatibility confirmed?
+- All error states documented?
+- openapi.yaml accurately reflects implementation?

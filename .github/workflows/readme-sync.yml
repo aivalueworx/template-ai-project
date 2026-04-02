@@ -1,0 +1,66 @@
+name: README & Changelog Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "package.json"
+      - "tsconfig.json"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    name: Sync README and CHANGELOG
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 2
+
+      - name: Get changed files
+        id: changed
+        run: |
+          git diff --name-only HEAD~1 HEAD > changed_files.txt
+          cat changed_files.txt
+
+      - name: Check if README needs sync
+        id: needs_sync
+        run: |
+          # If any source file changed, flag for potential README update
+          if grep -qE '^src/|^package\.json|^tsconfig\.json' changed_files.txt; then
+            echo "needs_readme_check=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Ensure CHANGELOG.md exists
+        run: |
+          if [ ! -f CHANGELOG.md ]; then
+            cat > CHANGELOG.md << 'EOF'
+          # Changelog
+
+          All notable changes to this project are documented here.
+          Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+
+          ## [Unreleased]
+
+          EOF
+          fi
+
+      - name: Update README Last reviewed date
+        if: steps.needs_sync.outputs.needs_readme_check == 'true'
+        run: |
+          TODAY=$(date +%Y-%m-%d)
+          if [ -f README.md ]; then
+            sed -i "s/Last reviewed: [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}/Last reviewed: $TODAY/g" README.md
+          fi
+
+      - name: Commit sync changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md CHANGELOG.md 2>/dev/null || true
+          git diff --cached --quiet || git commit -m "docs: auto-sync README and CHANGELOG [skip ci]"
+          git push

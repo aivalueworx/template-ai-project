@@ -1,0 +1,78 @@
+name: Doc Staleness Gate
+
+on:
+  pull_request:
+    paths:
+      - "docs/**"
+      - "*.md"
+  schedule:
+    # Every Monday at 09:00 UTC — opens issues for stale docs
+    - cron: "0 9 * * MON"
+  workflow_dispatch:
+    inputs:
+      threshold_days:
+        description: "Days before a doc is considered stale"
+        required: false
+        default: "90"
+
+jobs:
+  check-staleness:
+    name: Check documentation freshness
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run staleness checker
+        id: check
+        run: |
+          THRESHOLD="${{ github.event.inputs.threshold_days || '90' }}"
+          python scripts/check_doc_freshness.py \
+            --threshold-days "$THRESHOLD" \
+            --docs-dir docs/ \
+            ${{ github.event_name == 'pull_request' && '--fail-on-stale' || '' }} \
+            2>&1 | tee staleness-report.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
+
+      - name: Upload staleness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staleness-report
+          path: staleness-report.txt
+
+      - name: Open issues for stale docs (scheduled run only)
+        if: github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('staleness-report.txt', 'utf8');
+            const staleLines = report.split('\n').filter(l => l.startsWith('❌'));
+            if (staleLines.length === 0) return;
+
+            const body = [
+              '## Stale Documentation Detected',
+              '',
+              'The following docs have not been reviewed within the staleness threshold:',
+              '',
+              ...staleLines.map(l => `- ${l}`),
+              '',
+              'Update the `Last reviewed: YYYY-MM-DD` frontmatter in each file after reviewing.',
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[doc-staleness] ${staleLines.length} stale doc(s) detected`,
+              body,
+              labels: ['documentation', 'tech-debt-audit'],
+            });

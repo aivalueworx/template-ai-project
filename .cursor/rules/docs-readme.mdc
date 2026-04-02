@@ -1,0 +1,48 @@
+---
+description: Keep README.md and CHANGELOG.md in sync when source files change
+globs: ["src/**", "package.json", "package-lock.json", "tsconfig.json", "*.config.*"]
+alwaysApply: false
+---
+
+# README & Changelog Sync Rule
+
+When you modify any file matching the globs above, you MUST:
+
+1. **Check README.md** for sections that describe what you just changed:
+   - Installation/setup commands
+   - Configuration variables table
+   - Architecture description
+   - Usage examples
+
+2. **Update README.md** if the change affects any of the above.
+   - NEVER modify `<!-- HUMAN-AUTHORED -->` sections.
+   - Update `Last reviewed:` date in frontmatter.
+
+3. **Update CHANGELOG.md** with a Keep-a-Changelog entry under `[Unreleased]`:
+   ```markdown
+   ### Added
+   - [New feature or file]
+
+   ### Changed
+   - [Modified behaviour]
+
+   ### Fixed
+   - [Bug fix]
+   ```
+
+4. **Do not** generate changelog entries for internal refactors with no user-visible change — these go as `chore` commits only.
+
+## Format Reference
+
+```markdown
+## [Unreleased]
+
+### Added
+- New `POST /api/orders` endpoint with idempotency key support
+
+### Changed
+- `DATABASE_URL` env var now required at startup (was optional)
+
+### Fixed
+- Fixed race condition in session refresh logic
+```
