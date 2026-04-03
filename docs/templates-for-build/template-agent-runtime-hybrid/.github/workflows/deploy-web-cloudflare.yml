@@ -1,0 +1,14 @@
+name: Deploy web to Cloudflare
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Choose Cloudflare or Vercel for apps/web before enabling this workflow."

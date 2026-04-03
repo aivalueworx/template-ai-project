@@ -1,0 +1,16 @@
+name: Trigger task sync
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/trigger
+    steps:
+      - uses: actions/checkout@v4
+      - name: Placeholder Trigger.dev sync
+        run: |
+          echo "Add Trigger.dev CLI or platform-specific sync command here after project setup."

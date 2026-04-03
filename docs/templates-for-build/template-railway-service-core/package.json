@@ -1,0 +1,14 @@
+{
+  "name": "template-railway-service-core",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "node apps/api/src/index.mjs",
+    "dev:worker": "node apps/worker/src/index.mjs",
+    "check": "node scripts/check.mjs"
+  }
+}

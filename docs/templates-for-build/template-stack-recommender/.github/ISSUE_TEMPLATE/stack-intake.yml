@@ -1,0 +1,52 @@
+name: Stack intake
+description: Classify a project and recommend the correct starter stack before implementation.
+title: "[Stack Intake]: "
+labels:
+  - planning
+body:
+  - type: input
+    id: project_name
+    attributes:
+      label: Project name
+      placeholder: e.g. AI research assistant
+    validations:
+      required: true
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: One-line objective
+      description: What is the app meant to do?
+
+  - type: dropdown
+    id: project_type
+    attributes:
+      label: Primary project type
+      options:
+        - repo automation
+        - static/marketing site
+        - edge app/API
+        - persistent backend/service
+        - AI / agent / async workflow app
+        - internal ops tool
+
+  - type: checkboxes
+    id: characteristics
+    attributes:
+      label: Runtime and workflow characteristics
+      options:
+        - label: User waits in-browser for a response
+        - label: Work continues after the user leaves
+        - label: Edge latency matters
+        - label: Full Node or Python runtime needed
+        - label: Browser automation or native binaries needed
+        - label: Auth/data/storage needed
+        - label: Multi-step async workflow needed
+        - label: Tool-calling agent needed
+        - label: Realtime or live sync needed
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Recommended stack output
+      description: Paste the final recommendation here after review.

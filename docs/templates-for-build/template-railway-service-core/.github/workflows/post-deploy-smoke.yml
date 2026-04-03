@@ -1,0 +1,16 @@
+name: Post-deploy smoke
+
+on:
+  deployment_status:
+
+jobs:
+  smoke:
+    if: github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Smoke check deployed API
+        env:
+          DEPLOYED_URL: ${{ vars.API_PUBLIC_URL }}
+        run: |
+          test -n "$DEPLOYED_URL"
+          curl --fail "$DEPLOYED_URL/health"

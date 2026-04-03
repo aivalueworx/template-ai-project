@@ -1,0 +1,16 @@
+{
+  "name": "template-cf-pages-static",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev public",
+    "typecheck": "tsc --noEmit",
+    "deploy": "wrangler pages deploy public --project-name ${CLOUDFLARE_PAGES_PROJECT:-replace-me}"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest",
+    "typescript": "latest",
+    "wrangler": "latest"
+  }
+}

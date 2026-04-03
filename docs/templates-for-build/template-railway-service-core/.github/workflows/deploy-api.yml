@@ -1,0 +1,25 @@
+name: Deploy API to Railway
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install -g @railway/cli
+      - name: Deploy API service
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ vars.RAILWAY_PROJECT_ID }}
+          RAILWAY_ENVIRONMENT: ${{ vars.RAILWAY_ENVIRONMENT }}
+          RAILWAY_API_SERVICE: ${{ vars.RAILWAY_API_SERVICE }}
+        run: |
+          railway up --service "$RAILWAY_API_SERVICE" --project "$RAILWAY_PROJECT_ID" --environment "$RAILWAY_ENVIRONMENT" --ci

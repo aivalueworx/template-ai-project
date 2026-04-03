@@ -1,0 +1,15 @@
+{
+  "name": "template-agent-runtime-hybrid",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "check": "node scripts/check.mjs",
+    "dev:web": "node apps/web/server.mjs",
+    "dev:api": "node apps/api/src/index.mjs",
+    "dev:worker": "node apps/worker/src/index.mjs"
+  }
+}
